@@ -1,0 +1,67 @@
+<html>
+    <body>
+        <pre>
+             _                  ____            _       _ 
+            | | __ ___   ____ _/ ___|  ___ _ __(_)_ __ | |_       
+         _  | |/ _` \ \ / / _` \___ \ / __| '__| | '_ \| __|      
+        | |_| | (_| |\ V / (_| |___) | (__| |  | | |_) | |_       
+         \___/ \__,_| \_/ \__,_|____/ \___|_|  |_| .__/ \__|      
+                                                 |_|          
+        </pre>
+
+    <script language="JavaScript">
+        var func = 0
+        function f (n) {
+            func++
+            if (n > 100) {
+                n - 10
+                return n - 10
+            }
+            else {
+            return f(f(n+11))
+        }
+        }
+        function functional() {
+            var n=+prompt("Enter an integer >= 0")
+            if (isNaN(n)) {
+                alert(n, "- Illegal input!")
+                return
+            }
+            func = 0
+            alert("f(" + n + ")=" + f(n) + "\nFunction f is called " + func + " times.")
+        }
+        
+        function impe() {
+            console.log("an an")
+            var n=+prompt("Enter an integer >= 0")
+            if (isNaN(n)) {
+                alert(n, "- Illegal input!")
+                return
+            }
+            var nn = n
+            var fs = 1
+            var imp = 0
+            var val
+            while (fs > 0) {
+                if (n > 100) {
+                    n -= 10
+                    fs--
+                }
+                else {
+                    n += 11
+                    fs++
+                }
+                val = n
+                imp++
+                console.log(val + ", "+ n)
+            }
+            alert("f(" + nn + ")=" + val + "\nlooped " + imp + " times.")
+        }
+        
+    </script>
+    <form>
+        <input type=button value="Compute functional" onClick=functional()>
+        <input type=button value="Compute imperative" onClick=impe()>
+    </form>
+    </body>
+</html>

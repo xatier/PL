@@ -1,0 +1,5 @@
+in this case, the functional approach is more eazy to implement
+
+but will cost more (stack) space and runtime while pushing / poping the run-time stack
+
+both of them use the same algorithm, so they have the same time complexity 

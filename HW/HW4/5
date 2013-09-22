@@ -1,0 +1,21 @@
+a)
+in the worst case, qsort make O(n) nested  recursive calls and need O(n) auxiliary space.
+
+b)
+void qsort (int l, int h) {
+    if (l < h) {
+        int m = partition(l, h);
+        qsort(l, m-1);
+        qsort(m+1, h);
+    }
+}
+
+考慮 partition 裏面的分割，反過來想先遞迴其中一邊，找 list 比較小的那頭做遞迴
+
+c)
+O(lg n)
+選比較短的一邊作 recurse
+每次遞迴用到的空間是 O(1)，又最多遞迴到 lg n 層，所以 space complexity 是 O(lg n)
+
+d)
+採用相同的 algorithm ，time complexity 相同

@@ -1,0 +1,405 @@
+1.
+
+    a) \f.\a.\b.\c.c (f a) (f b)
+
+        f = t1
+        a = t2
+        f a = t3
+            => t1 = t2 -> t3
+        b = t4
+        f b = t5
+            => t1 = t4 -> t5
+            => t2 = t4, t3 = t5
+        c = t6
+        c (f a) = t7
+            => t6 = t5 -> t7
+        c (f a) (f b) = t8
+            => t7 = t5 -> t8
+        \f.\a.\b.\c.c (f a) (f b) = t9
+            => t9 = t1 -> t2 -> t4 -> t6 -> t8
+            => (t4 -> t3) -> t4 -> t4 -> (t5 -> (t5 -> t8)) -> t8
+            
+            - fun ff f a b c = c (f a) (f b);
+            val ff = fn : ('a -> 'b) -> 'a -> 'a -> ('b -> 'b -> 'c) -> 'c
+
+    b) \f.\a.\b.b f (f a b)
+
+        b = t1
+        f = t2
+        b f = t3
+            => t2 = t1 -> t3   --- 1
+        a = t4
+        f a = t5
+            => t2 = t4 -> t5   --- 2
+            (1) & (2)
+            => t1 = t4, t3 = t5 -- 3
+
+        f a b = t6
+            => t5 = t1 -> t6
+            (3)
+            => t3 = t1 -> t6   --- 4
+
+        b f (f a b) = t7
+            => t3 = t6 -> t7   --- 5
+            (4) & (5)
+            => t1 = t6, t6 = t7 = t1
+
+        \f.\a.\b.b f (f a b) = t8
+            => t2 -> t4 -> t1 -> t7 -> t8
+
+            note: 會 circular
+
+        - fun ff f a b = b f (f a b);
+        stdIn:22.13-28.3 Error: operator is not a function [circularity]
+          operator: 'Z
+            in expression:
+                (f a) b 
+
+    c) fix = \f.f (\x.fix f x)
+
+        f = t1
+        fix = t2
+        fix f = t3
+            => t2 = t1 -> t3
+        x = t4
+        fix f x = t5
+            => t3 = t4 -> t5
+        \x.fix f x = t6
+            => t6 = t4 -> t5
+        f (\x.fix f x) = t7
+            => t1 = t5 -> t7
+        fix = \f.f (\x.fix f x) = t2
+            => t2 = t1 -> t7
+            => t3 = t7
+            t2 = t1 -> t3 = t1 -> (t4 -> t5)
+
+
+2.
+    fun flodr f a [] = a
+        | foldr f a (x::xs) = f(x, foldr f a xs); 
+
+    fun flodl f a [] = a
+        | flodl f a (x::xs) = flodl f (f(a, x)) xs;
+
+    a) lemma: x + (y X z) = (x + y) X z
+       proof: y + (flodl X z xs) = flodl X (y + z) xs, for any list xs.
+
+        base case: xs = []
+            lhs 
+            = y + (foldl X z [])    # apply rule of foldl
+            = y + z
+
+            rhs
+            = foldl X (y + z) []    # apply rule of foldl
+            = (y + z)
+            = rhs
+
+        hypothesis 
+            y + (flodl X z xs) = flodl X (y + z) xs, for list xs.
+
+        induction case: xs = a::as
+            lhs
+            = y + (foldl X z (a::as))
+            = y + (foldl X (z X a) as)   # apply rule of foldl
+            = flodl X (y + (z X a)) as   # by induction hypothesis
+            
+            rhs
+            = flodl X (y + z) (a::as)    # apply rule of flodl
+            = flodl X ((y + z) X a) as   # apply the lemma:
+            = flodl X (y + (z X a)) as
+            = lhs
+
+        Q.E.D.
+
+
+    b) lemma (a): x + (y X z) = (x + y) X z
+       theorem: x + a = a X x
+       proof: flodr + a xs = flodl X a xs, for any list xs
+
+        base case: xs = []
+            lhs
+            = flodr + a []     # the definition of flodr
+            = a
+
+            rhs
+            = flodl X a []     # the definition of flodl
+            = a
+
+        
+        hypothesis 
+            flodr + a xs = flodl X a xs, for any list xs
+
+        induction case: xs = b::bx
+
+            lhs
+            = flodr + a (b::bs)
+            = b + (foldr + a bs)  # rule of foldr
+            = b + (foldl X a bs)  # by induction hypothesis
+            = flodl X (b + a) bs  # the definition of foldl
+
+            rhs
+            = flodl X a (b::bs)
+            = flodl X (a X b) bs  # by the theorem
+            = flodl X (b + a) bs
+            = lhs
+
+        Q.E.D.
+
+    c) + is associative and a is the identity of +
+       proof: foldr + a xs = foldl + a xs, for any list xs
+
+
+        base case: xs = []
+            # by the definition of foldr and foldl
+            foldr + a [] = a = foldl + a xs           
+
+        hypothesis
+            foldr + a xs = foldl + a xs, for any list xs
+
+        induction case: xs = x::as
+
+        lhs
+        = foldr + a xs             # by b)
+        = foldl X a xs
+        = foldl X a (x::xs)        # by rule of foldl
+        = foldl X (a + x) xs       # a is the identity of +
+        = foldl X x xs
+
+        rhs
+        = foldl + a (x::xs)
+        = foldl + (a + x) xs       # again, a is the identity of +
+        = foldl + x xs
+        = fold X x xs              # from b)
+        = lhs
+
+
+    d)
+        define
+        val sumr = foldr + 0;
+        val suml = foldl + 0;
+
+        proof: sumr xs = suml xs
+
+
+        base case: xs = []
+            sumr [] = foldr + 0 [] = 0
+            suml [] = foldl + 0 [] = 0
+
+        hypothesis
+            sumr xs = suml xs
+
+        induction case: xs = x::xs
+            lhs
+            = sumr x::xs
+            = foldr + 0 (x::xs)           # by c)
+            = foldl + 0 (x::xs)
+            = foldl + (0 + x) xs
+            = foldl + x xs
+
+            rhs
+            = suml x::xs
+            = foldl + 0 (x::xs)           # apply rule of foldl
+            = foldl + (0 + x) xs
+            = foldl + x xs
+            = lhs
+
+
+    e) define 
+        fun revr xs = foldr (fn (x, xs) => xs@[x]) [] xs;
+        fun revl xs = foldl (fn (xs, x) => x::xs) [] xs;
+
+        proof: revr xs = revl xs, for any list xs
+
+        goal: revr is +, revl is X in theorem b
+
+        x + a = a X x
+
+        obviously, xs@[x] == x::xs
+
+        x + (y X z) = (x + y) X z
+
+        lhs
+        = x + (z::y)
+        = z::y@[x]
+
+        rhs
+        = (y@[z]) X z
+        = z::y@[x]
+        = lhs
+        
+       Q.E.D 
+
+
+
+    f)
+        fun revl xs = foldl (fn (x, xs) => x ::xs) [] xs;
+
+
+3.
+    a) n2c
+        - fun n2c 0 f x = x
+        = | n2c n f x = f(n2c (n - 1) f x);
+        val n2c = fn : int -> ('a -> 'a) -> 'a -> 'a
+
+        - n2c 10 (fn x => x+1) 0;
+        val it = 10 : int
+
+    b) c2n
+        - fun c2n n = n (fn x => x+1) 0;
+        val c2n = fn : ((int -> int) -> int -> 'a) -> 'a
+
+        - (c2n o n2c) 7;
+        val it = 7 : int
+
+    c) ++
+        - infix 6 ++;
+        infix 6 ++
+        - fun (m ++ n) f x = m f (n f x);
+        val ++ = fn : ('a -> 'b -> 'c) * ('a -> 'd -> 'b) -> 'a -> 'd -> 'c
+
+    d) **
+        - infix 7 **;
+        infix 7 **
+        - fun (m ** n) f x = m (n f) x;  
+        val ** = fn : ('a -> 'b -> 'c) * ('d -> 'a) -> 'd -> 'b -> 'c 
+
+
+4.
+    a) 
+        +----+  +----+  +----+  +----+
+        |succ|->|succ|->|succ|->|zero|
+        +----+  +----+  +----+  +----+
+
+    b)
+        - fun n2N 0 = Zero
+        = | n2N n = Succ (n2N (n-1));
+        val n2N = fn : int -> Nat
+
+        - n2N 10;
+        val it = Succ (Succ (Succ (Succ (Succ #)))) : Nat 
+
+    c)
+        - fun N2n Zero = 0
+        = | N2n (Succ xs) = 1 + (N2n xs);
+        val N2n = fn : Nat -> int
+
+        - N2n(n2N(30));
+        val it = 30 : int
+
+
+    d)
+
+        - infix 6 +++;
+        infix 6 +++
+        - fun Zero +++ ys = ys
+        = |(Succ xs) +++ ys = Succ (xs +++ ys);
+        val +++ = fn : Nat * Nat -> Nat
+        
+        - N2n(n2N(30) +++ n2N(14));
+        val it = 44 : int
+
+
+    e)
+        - infix 7 ***;
+        infix 7 ***
+
+
+        - fun (Succ Zero) *** ys = ys
+        = |(Succ xs) *** ys = (xs *** ys) +++ ys;
+        stdIn:1.5-18.39 Warning: match nonexhaustive
+                  (Succ Zero,ys) => ...
+                  (Succ xs,ys) => ...
+          
+        val *** = fn : Nat * Nat -> Nat
+
+
+        - N2n(n2N(30) *** n2N(21));
+        val it = 630 : it
+
+
+    f)
+        fun !!! Zero = 1
+        | !!! Succ xs = 1 * !!! xs
+    g)
+        fun ! 0 = 0
+        | ! n = N2n(n2N(n-1) *** n2N(1))
+
+5.
+    Q__Q
+
+6.
+a)
+    X(2)   # ctor
+    X(1)   # ctor
+    X(1)   # dtor
+    X(2)   # dtor
+
+b)
+
+    run time stack:
+
+    +------------+
+    |ctor X::X(2)|
+    +------------+
+    |    q(2)    |
+    +------------+
+    |    p(2)    |
+    +------------+
+    |   main()   |
+    +------------+
+
+    type_info:         catch table
+
+    +------------+     +---+
+    |     X      |     |   | --> { p(2-1); }  
+    +------------+     +---+
+    |    int     |     |   | --> { cout << c; }
+    +------------+     +---+
+
+
+    exception table:         heap:
+    +--------+               +-----------+
+    |  X(2)  | ---->  X ---> | +-------+ |
+    +--------+               | |int(2) | |
+                             | +-------+ |
+                             +-----------+
+c)
+
+    run time stack:
+
+    +------------+
+    |    q(0)    |
+    +------------+
+    |    p(0)    |
+    +------------+
+    |    p(1)    |
+    +------------+
+    |    p(2)    |
+    +------------+
+    |   main()   |
+    +------------+
+
+    type_info:         catch table
+
+                       +---+
+                       |   | --> { p(1-1); } 
+                       +---+
+                       |   | --> { cout << c; }
+    +------------+     +---+
+    |     X      |     |   | --> { p(2-1); }  
+    +------------+     +---+
+    |    int     |     |   | --> { cout << c; }
+    +------------+     +---+
+
+
+    exception table:                 heap:
+
+    +--------+                        +-----------+
+    |  X(2)  | ----> instance X(2) -> | +-------+ |
+    +--------+                        | |int(2) | |
+    |  X(1)  |                        | +-------+ |
+    +--------+                        |           |
+              \ ---> instance X(1) -> | +-------+ |
+                                      | |int(1) | |
+                                      | +-------+ |
+                                      +-----------+

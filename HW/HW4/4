@@ -1,0 +1,3 @@
+according to the definition of flodr and flodl
+foldl is tail recursive
+compilers can do tail recursive optimizations for suml
